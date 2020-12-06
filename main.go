@@ -17,19 +17,24 @@ import (
 )
 
 func main() {
-	fmt.Println("Starting Application")
-	cronTimer := cron.New(cron.WithSeconds())
+	fmt.Println("Starting Reservation Application")
+	l, _ := time.LoadLocation("America/Denver")
+	cronTimer := cron.New(cron.WithLocation(l), cron.WithSeconds())
 	cronTimer.AddFunc("5 0 6,8,10,12,14,16,18,20 * * *", func() {
 		hour, amPm := parseCurrentTime()
-		processValidRequests(hour, amPm)
+		ProcessValidRequests(hour, amPm)
 	})
 
 	cronTimer.Start()
 
 	r := mux.NewRouter()
 	r.HandleFunc("/et/reservation", processReservationRequest).Methods(http.MethodPost)
+	r.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Received Reservation Request"))
+	})
+
 	http.Handle("/", r)
-	log.Fatalln(http.ListenAndServe(":80", nil))
+	log.Fatalln(http.ListenAndServe(":8080", nil))
 	//Set Cron job to run every day 1 in the afternoon
 
 }
@@ -69,6 +74,7 @@ func processReservationRequest(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
 	writeRequestToFile(reservationRequest)
+	w.Write([]byte("Reservation Successfully Processed"))
 }
 
 func writeRequestToFile(request ReservationRequest) {
@@ -78,20 +84,21 @@ func writeRequestToFile(request ReservationRequest) {
 	}
 
 	defer f.Close()
-	if _, err := f.WriteString(strconv.Itoa(request.Time) + "," + request.Ampm + "," + strconv.Itoa(request.Week) + "," + strconv.Itoa(request.Day) + "\n"); err != nil {
+	if _, err := f.WriteString(request.Time + "," +
+		request.Ampm + "," +
+		request.Week + "," + request.Day +
+		"\n"); err != nil {
 		log.Println(err)
 	}
-	//Test code
-	//processValidRequests(request.Time, request.Ampm)
 }
 
-func processValidRequests(time int, ampm string) {
+func ProcessValidRequests(time int, ampm string) {
+
 	f, err := os.Open("reservations.txt")
+	var newFile string
 	if err != nil {
 		fmt.Println(err)
 	}
-
-	defer f.Close()
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
@@ -100,13 +107,36 @@ func processValidRequests(time int, ampm string) {
 		hour, _ := strconv.Atoi(wholeTime[0])
 		if hour == time && wholeTime[1] == ampm {
 			fmt.Println("Going to submit " + line + " for processing")
+			resp, err := http.Get("http://172.17.0.3:8082/et1/" + strconv.Itoa(hour) + "/" + ampm + "/" + wholeTime[2] + "/" + wholeTime[3])
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			fmt.Println("Response from Reservation request was " + resp.Status)
+			fmt.Println("And then remove entry " + line + " from file")
+		} else {
+			newFile += line + "\n"
 		}
 	}
+	fmt.Println("Contents of New File are " + newFile)
+	f.Close()
+	replaceFile, err := os.OpenFile("reservations.txt", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+	replaceFile.Write([]byte(newFile))
+	replaceFile.Close()
 }
 
 type ReservationRequest struct {
-	Time int    `json:"time"`
-	Ampm string `json:"ampm"`
-	Week int    `json:"week"`
-	Day  int    `json:"day"`
+	Time        string `json:"time"`
+	Ampm        string `json:"ampm"`
+	Week        string `json:"week"`
+	Day         string `json:"day"`
+	UserDetails struct {
+		FirstName   string `json:"firstName"`
+		MiddleName  string `json:"middleName"`
+		BirthMonth  string `json:"birthMonth"`
+		BirthYear   string `json:"birthYear"`
+		BirthDay    string `json:"birthDay"`
+		Email       string `json:"email"`
+		PhoneNumber string `json:"phoneNumber"`
+	} `json:"userDetails"`
 }
