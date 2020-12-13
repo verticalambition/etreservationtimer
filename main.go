@@ -2,9 +2,11 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/robfig/cron"
+	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
@@ -20,9 +22,8 @@ func main() {
 	fmt.Println("Starting Reservation Application")
 	l, _ := time.LoadLocation("America/Denver")
 	cronTimer := cron.New(cron.WithLocation(l), cron.WithSeconds())
-	cronTimer.AddFunc("5 0 6,8,10,12,14,16,18,20 * * *", func() {
-		hour, amPm := parseCurrentTime()
-		ProcessValidRequests(hour, amPm)
+	cronTimer.AddFunc("5 0 11 * * *", func() {
+		ProcessValidRequests()
 	})
 
 	cronTimer.Start()
@@ -39,7 +40,7 @@ func main() {
 
 }
 
-func parseCurrentTime() (int, string) {
+func parseCurrentTime() (string, string) {
 	t := time.Now()
 	fmt.Println("Executing job at " + t.String())
 	mst, err := time.LoadLocation("America/Denver")
@@ -61,7 +62,8 @@ func parseCurrentTime() (int, string) {
 	} else {
 		amPm = "AM"
 	}
-	return hour, amPm
+	stringHour := strconv.Itoa(hour)
+	return stringHour, amPm
 }
 
 func processReservationRequest(w http.ResponseWriter, r *http.Request) {
@@ -84,15 +86,17 @@ func writeRequestToFile(request ReservationRequest) {
 	}
 
 	defer f.Close()
-	if _, err := f.WriteString(request.Time + "," +
-		request.Ampm + "," +
-		request.Week + "," + request.Day +
-		"\n"); err != nil {
+	stringRequest, err := json.Marshal(request)
+	if err != nil {
+		log.Println("Error Marshalling Request to String to write to file")
+		return
+	}
+	if _, err := f.WriteString((string)(stringRequest) + "\n"); err != nil {
 		log.Println(err)
 	}
 }
 
-func ProcessValidRequests(time int, ampm string) {
+func ProcessValidRequests() {
 
 	f, err := os.Open("reservations.txt")
 	var newFile string
@@ -101,23 +105,29 @@ func ProcessValidRequests(time int, ampm string) {
 	}
 
 	scanner := bufio.NewScanner(f)
+	var currentRequest ReservationRequest
 	for scanner.Scan() {
 		line := scanner.Text()
-		wholeTime := strings.Split(line, ",")
-		hour, _ := strconv.Atoi(wholeTime[0])
-		if hour == time && wholeTime[1] == ampm {
-			fmt.Println("Going to submit " + line + " for processing")
-			resp, err := http.Get("http://172.17.0.3:8082/et1/" + strconv.Itoa(hour) + "/" + ampm + "/" + wholeTime[2] + "/" + wholeTime[3])
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-			fmt.Println("Response from Reservation request was " + resp.Status)
-			fmt.Println("And then remove entry " + line + " from file")
-		} else {
-			newFile += line + "\n"
+		err = json.Unmarshal([]byte(line), &currentRequest)
+		if err != nil {
+			fmt.Println("Error Unmarhsalling line in file to Reservation Request Struct")
 		}
+
+		fmt.Println("Going to submit " + line + " for processing")
+		//Hopefully send it over as a post to Java container
+		resp, err := http.Post("http://172.17.0.3:8082/attemptreservation", "application/json", bytes.NewBufferString(line))
+		if err != nil {
+			log.Println(err)
+		}
+		responseBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("Error reading response body from server")
+		}
+		fmt.Println("Response code from Reservation request was " + resp.Status)
+		fmt.Println("Response message from reservation request was \n" + (string)(responseBody))
+		fmt.Println("And then remove entry " + line + " from file")
 	}
+
 	fmt.Println("Contents of New File are " + newFile)
 	f.Close()
 	replaceFile, err := os.OpenFile("reservations.txt", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
@@ -133,8 +143,9 @@ type ReservationRequest struct {
 	UserDetails struct {
 		FirstName   string `json:"firstName"`
 		MiddleName  string `json:"middleName"`
-		BirthMonth  string `json:"birthMonth"`
+		LastName    string `json:"lastName"`
 		BirthYear   string `json:"birthYear"`
+		BirthMonth  string `json:"birthMonth"`
 		BirthDay    string `json:"birthDay"`
 		Email       string `json:"email"`
 		PhoneNumber string `json:"phoneNumber"`
