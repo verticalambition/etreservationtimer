@@ -9,4 +9,4 @@ services:
 script:
   - docker build -t "$DOCKER_USERNAME/etreservationapiserver .
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-  - docker push verticalambition/etreservationapiserver:latest"
+  - docker push verticalambition/etreservationapiserver:latest
