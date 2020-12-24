@@ -7,6 +7,6 @@ services:
   - docker
 
 script:
-  - docker build -t "verticalambition/etreservationapiserver .
+  - docker build -t verticalambition/etreservationapiserver .
   - echo "$DOCKER_PASSWORD" | docker login -u verticalambition --password-stdin
   - docker push verticalambition/etreservationapiserver:latest
