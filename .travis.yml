@@ -9,4 +9,4 @@ services:
 script:
   - docker build -t etreservationapiserver .
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-  - docker push whatever/etreservationapiserver
+  - docker push "$DOCKER_USERNAME/etreservationapiserver"
