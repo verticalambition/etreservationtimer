@@ -1,12 +1,10 @@
 language: go
 
-addons:
-  apt:
-    packages:
-      - sshpass
+before_install:
+  - sudo apt-get install sshpass
 
 script:
-  - ssh -o stricthostkeychecking=no root@206.189.252.105 pwd
+  - sshpass -p "$SERVER_PASSWORD" ssh root@206.189.252.105 pwd
 
 #services:
 #  - docker
