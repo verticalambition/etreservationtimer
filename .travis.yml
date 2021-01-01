@@ -6,7 +6,7 @@ addons:
       - sshpass
 
 script:
-  - ssh root@206.189.252.105 pwd
+  - ssh -o stricthostkeychecking=no root@206.189.252.105 pwd
 
 #services:
 #  - docker
