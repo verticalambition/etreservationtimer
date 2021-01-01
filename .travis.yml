@@ -7,7 +7,7 @@ before_install:
 - chmod 600 ./deploy_key
 - echo -e "Host 206.189.252.105\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 - cat ~/.ssh/config
-- ssh-add ./deploy_key
+- sshpass -p "" ssh-add ./deploy_key
 - ssh -i ./deploy_key root@206.189.252.105 pwd
 
 #services:
