@@ -3,10 +3,10 @@ language: go
 addons:
   apt:
     packages:
-    - sshpass
+      - sshpass
 
 script:
-- sshpass -p "SERVER_PASSWORD" root@206.189.252.105 pwd
+  - sshpass -p "SERVER_PASSWORD" root@206.189.252.105 pwd
 
 #services:
 #  - docker
