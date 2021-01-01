@@ -1,7 +1,12 @@
 language: go
 
+addons:
+  apt:
+    packages:
+    - sshpass
+
 before_install:
-- ssh root@206.189.252.105 -p "SERVER_PASSWORD" pwd
+- sshpass -p "SERVER_PASSWORD" root@206.189.252.105 pwd
 
 #services:
 #  - docker
