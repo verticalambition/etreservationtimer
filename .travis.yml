@@ -7,11 +7,12 @@ services:
   - docker
 
 script:
-  - docker build -t verticalambition/etreservationapiserver .
-  - echo "$DOCKER_PASSWORD" | docker login -u verticalambition --password-stdin
-  - docker push verticalambition/etreservationapiserver:latest
+#  - docker build -t verticalambition/etreservationapiserver .
+#  - echo "$DOCKER_PASSWORD" | docker login -u verticalambition --password-stdin
+#  - docker push verticalambition/etreservationapiserver:latest
   - eval "$(ssh-agent -s)"
   - chmod 600 ./deploy_key
   - echo -e "Host 206.189.252.105\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+  - cat ~/.ssh/config
   - ssh-add ./deploy_key
   - ssh -i ./deploy_key root@206.189.252.105 pwd
