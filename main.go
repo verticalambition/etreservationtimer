@@ -116,7 +116,7 @@ func ProcessValidRequests() {
 		fmt.Println("Going to submit " + line + " for processing")
 		//Hopefully send it over as a post to Java container
 		//resp, err := http.Post("http://localhost:8082/attemptreservation", "application/json", bytes.NewBufferString(line))
-		resp, err := http.Post("http://172.17.0.2:8082/attemptreservation", "application/json", bytes.NewBufferString(line))
+		resp, err := http.Post("etwebdriver:8082/attemptreservation", "application/json", bytes.NewBufferString(line))
 		if err != nil {
 			log.Println(err)
 		}

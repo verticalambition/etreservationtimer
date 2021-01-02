@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  etapiserver:
+    image: 'verticalambition/etreservationapiserver:latest'
+    ports:
+      - 8080:8080
+  etwebdriver:
+    image: 'verticalambition/etreservationcreater:latest'
+      
+
