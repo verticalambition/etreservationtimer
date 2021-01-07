@@ -28,11 +28,15 @@ func main() {
 
 	cronTimer.Start()
 
-	testConnectionToWebDriver()
 	r := mux.NewRouter()
 	r.HandleFunc("/et/reservation", processReservationRequest).Methods(http.MethodPost)
 	r.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Received Reservation Request"))
+
+		response, err := testConnectionToWebDriver()
+		if err != nil {
+			w.Write([]byte(err.Error()))
+		}
+		w.Write([]byte(response))
 	})
 
 	http.Handle("/", r)
@@ -41,18 +45,18 @@ func main() {
 
 }
 
-func testConnectionToWebDriver() {
+func testConnectionToWebDriver() (string, error) {
 	resp, err := http.Get("http://etwebdriver:8082/readycheck")
 	if err != nil {
-		fmt.Println(err)
+		return "", err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println(err)
+		return "", err
 	}
 
-	fmt.Println(body)
+	return string(body), nil
 }
 
 func parseCurrentTime() (string, string) {
