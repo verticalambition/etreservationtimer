@@ -28,6 +28,7 @@ func main() {
 
 	cronTimer.Start()
 
+	testConnectionToWebDriver()
 	r := mux.NewRouter()
 	r.HandleFunc("/et/reservation", processReservationRequest).Methods(http.MethodPost)
 	r.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
@@ -38,6 +39,20 @@ func main() {
 	log.Fatalln(http.ListenAndServe(":8080", nil))
 	//Set Cron job to run every day 1 in the afternoon
 
+}
+
+func testConnectionToWebDriver() {
+	resp, err := http.Get("etwebdriver:8082/readycheck")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println(body)
 }
 
 func parseCurrentTime() (string, string) {
