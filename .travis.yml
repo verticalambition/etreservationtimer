@@ -12,7 +12,7 @@ before_install:
   - chmod 600 ./deploy_key
   - echo -e "Host 161.35.250.136\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
   - ssh-add ./deploy_key
-  - ssh -o StrictHostKeyChecking=no -i ./deploy_key root@161.35.250.136 "docker pull verticalambition/etreservationapiserver:latest && docker-compose down && docker-compose up"
+  - ssh -o StrictHostKeyChecking=no -i ./deploy_key root@161.35.250.136 "docker pull verticalambition/etreservationapiserver:latest && docker-compose down && docker-compose up -d"
  # - ssh -o StrictHostKeyChecking=no -i ./deploy_key root@161.35.250.136 'docker run --name etapiserver -p 8080:8080 -d --rm verticalambition/etreservationapiserver'
 
 #- docker pull verticalambition/etreservationapiserver:latest

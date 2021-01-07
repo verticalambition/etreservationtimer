@@ -42,7 +42,7 @@ func main() {
 }
 
 func testConnectionToWebDriver() {
-	resp, err := http.Get("etwebdriver:8082/readycheck")
+	resp, err := http.Get("http://etwebdriver:8082/readycheck")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -131,7 +131,7 @@ func ProcessValidRequests() {
 		fmt.Println("Going to submit " + line + " for processing")
 		//Hopefully send it over as a post to Java container
 		//resp, err := http.Post("http://localhost:8082/attemptreservation", "application/json", bytes.NewBufferString(line))
-		resp, err := http.Post("etwebdriver:8082/attemptreservation", "application/json", bytes.NewBufferString(line))
+		resp, err := http.Post("http://etwebdriver:8082/attemptreservation", "application/json", bytes.NewBufferString(line))
 		if err != nil {
 			log.Println(err)
 		}
